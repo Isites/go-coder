@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package oneof;
+
+option go_package = ".;oneof";
+
+
+message Status {
+  oneof show {
+    int32 is_show = 1;
+  }
+}
+
+message Test {
+    int32 bar = 1;
+    Status st = 2;
+}

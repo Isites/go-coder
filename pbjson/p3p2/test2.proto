@@ -1,0 +1,10 @@
+syntax = "proto2";
+
+package p3p2;
+
+option go_package = ".;p3p2";
+
+
+message Status {
+    optional int32 is_show = 2;
+}

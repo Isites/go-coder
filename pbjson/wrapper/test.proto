@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package wrapper;
+
+option go_package = ".;wrapper";
+
+import "google/protobuf/wrappers.proto";
+
+message Status {
+    google.protobuf.Int32Value is_show = 1;
+}
+
+
+message Test {
+    int32 bar = 1;
+    Status st = 2;
+}

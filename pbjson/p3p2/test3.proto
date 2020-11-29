@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package p3p2;
+
+option go_package = ".;p3p2";
+
+
+import "github.com/Isites/go-coder/pbjson/p3p2/test2.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+
+message Test {
+    int32 bar = 1 [(gogoproto.moretags) = 'form:"more_bar"', (gogoproto.jsontag) = 'custom_tag'];
+    p3p2.Status st = 2;
+}
