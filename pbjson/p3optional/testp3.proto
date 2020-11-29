@@ -6,8 +6,8 @@ option go_package = ".;p3optional";
 
 
 message Status {
-    optional int32 is_show = 1;
-  }
+  optional int32 is_show = 1;
+}
 
 message Test {
     int32 bar = 1;

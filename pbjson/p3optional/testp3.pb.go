@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.23.0
 // 	protoc        v3.14.0
-// source: test.proto
+// source: testp3.proto
 
 package p3optional
 
@@ -36,7 +36,7 @@ type Status struct {
 func (x *Status) Reset() {
 	*x = Status{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_test_proto_msgTypes[0]
+		mi := &file_testp3_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -49,7 +49,7 @@ func (x *Status) String() string {
 func (*Status) ProtoMessage() {}
 
 func (x *Status) ProtoReflect() protoreflect.Message {
-	mi := &file_test_proto_msgTypes[0]
+	mi := &file_testp3_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +62,7 @@ func (x *Status) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Status.ProtoReflect.Descriptor instead.
 func (*Status) Descriptor() ([]byte, []int) {
-	return file_test_proto_rawDescGZIP(), []int{0}
+	return file_testp3_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Status) GetIsShow() int32 {
@@ -84,7 +84,7 @@ type Test struct {
 func (x *Test) Reset() {
 	*x = Test{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_test_proto_msgTypes[1]
+		mi := &file_testp3_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -97,7 +97,7 @@ func (x *Test) String() string {
 func (*Test) ProtoMessage() {}
 
 func (x *Test) ProtoReflect() protoreflect.Message {
-	mi := &file_test_proto_msgTypes[1]
+	mi := &file_testp3_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -110,7 +110,7 @@ func (x *Test) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Test.ProtoReflect.Descriptor instead.
 func (*Test) Descriptor() ([]byte, []int) {
-	return file_test_proto_rawDescGZIP(), []int{1}
+	return file_testp3_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Test) GetBar() int32 {
@@ -127,40 +127,40 @@ func (x *Test) GetSt() *Status {
 	return nil
 }
 
-var File_test_proto protoreflect.FileDescriptor
+var File_testp3_proto protoreflect.FileDescriptor
 
-var file_test_proto_rawDesc = []byte{
-	0x0a, 0x0a, 0x74, 0x65, 0x73, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0a, 0x70, 0x33,
-	0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x22, 0x32, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x12, 0x1c, 0x0a, 0x07, 0x69, 0x73, 0x5f, 0x73, 0x68, 0x6f, 0x77, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x69, 0x73, 0x53, 0x68, 0x6f, 0x77, 0x88, 0x01, 0x01,
-	0x42, 0x0a, 0x0a, 0x08, 0x5f, 0x69, 0x73, 0x5f, 0x73, 0x68, 0x6f, 0x77, 0x22, 0x3c, 0x0a, 0x04,
-	0x54, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x62, 0x61, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x05, 0x52, 0x03, 0x62, 0x61, 0x72, 0x12, 0x22, 0x0a, 0x02, 0x73, 0x74, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x12, 0x2e, 0x70, 0x33, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x2e,
-	0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x02, 0x73, 0x74, 0x42, 0x0e, 0x5a, 0x0c, 0x2e, 0x3b,
-	0x70, 0x33, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+var file_testp3_proto_rawDesc = []byte{
+	0x0a, 0x0c, 0x74, 0x65, 0x73, 0x74, 0x70, 0x33, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0a,
+	0x70, 0x33, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x22, 0x32, 0x0a, 0x06, 0x53, 0x74,
+	0x61, 0x74, 0x75, 0x73, 0x12, 0x1c, 0x0a, 0x07, 0x69, 0x73, 0x5f, 0x73, 0x68, 0x6f, 0x77, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x05, 0x48, 0x00, 0x52, 0x06, 0x69, 0x73, 0x53, 0x68, 0x6f, 0x77, 0x88,
+	0x01, 0x01, 0x42, 0x0a, 0x0a, 0x08, 0x5f, 0x69, 0x73, 0x5f, 0x73, 0x68, 0x6f, 0x77, 0x22, 0x3c,
+	0x0a, 0x04, 0x54, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x62, 0x61, 0x72, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x05, 0x52, 0x03, 0x62, 0x61, 0x72, 0x12, 0x22, 0x0a, 0x02, 0x73, 0x74, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x70, 0x33, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x61,
+	0x6c, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x02, 0x73, 0x74, 0x42, 0x0e, 0x5a, 0x0c,
+	0x2e, 0x3b, 0x70, 0x33, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_test_proto_rawDescOnce sync.Once
-	file_test_proto_rawDescData = file_test_proto_rawDesc
+	file_testp3_proto_rawDescOnce sync.Once
+	file_testp3_proto_rawDescData = file_testp3_proto_rawDesc
 )
 
-func file_test_proto_rawDescGZIP() []byte {
-	file_test_proto_rawDescOnce.Do(func() {
-		file_test_proto_rawDescData = protoimpl.X.CompressGZIP(file_test_proto_rawDescData)
+func file_testp3_proto_rawDescGZIP() []byte {
+	file_testp3_proto_rawDescOnce.Do(func() {
+		file_testp3_proto_rawDescData = protoimpl.X.CompressGZIP(file_testp3_proto_rawDescData)
 	})
-	return file_test_proto_rawDescData
+	return file_testp3_proto_rawDescData
 }
 
-var file_test_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_test_proto_goTypes = []interface{}{
+var file_testp3_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_testp3_proto_goTypes = []interface{}{
 	(*Status)(nil), // 0: p3optional.Status
 	(*Test)(nil),   // 1: p3optional.Test
 }
-var file_test_proto_depIdxs = []int32{
+var file_testp3_proto_depIdxs = []int32{
 	0, // 0: p3optional.Test.st:type_name -> p3optional.Status
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -169,13 +169,13 @@ var file_test_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_test_proto_init() }
-func file_test_proto_init() {
-	if File_test_proto != nil {
+func init() { file_testp3_proto_init() }
+func file_testp3_proto_init() {
+	if File_testp3_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_test_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_testp3_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Status); i {
 			case 0:
 				return &v.state
@@ -187,7 +187,7 @@ func file_test_proto_init() {
 				return nil
 			}
 		}
-		file_test_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_testp3_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Test); i {
 			case 0:
 				return &v.state
@@ -200,23 +200,23 @@ func file_test_proto_init() {
 			}
 		}
 	}
-	file_test_proto_msgTypes[0].OneofWrappers = []interface{}{}
+	file_testp3_proto_msgTypes[0].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_test_proto_rawDesc,
+			RawDescriptor: file_testp3_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_test_proto_goTypes,
-		DependencyIndexes: file_test_proto_depIdxs,
-		MessageInfos:      file_test_proto_msgTypes,
+		GoTypes:           file_testp3_proto_goTypes,
+		DependencyIndexes: file_testp3_proto_depIdxs,
+		MessageInfos:      file_testp3_proto_msgTypes,
 	}.Build()
-	File_test_proto = out.File
-	file_test_proto_rawDesc = nil
-	file_test_proto_goTypes = nil
-	file_test_proto_depIdxs = nil
+	File_testp3_proto = out.File
+	file_testp3_proto_rawDesc = nil
+	file_testp3_proto_goTypes = nil
+	file_testp3_proto_depIdxs = nil
 }
