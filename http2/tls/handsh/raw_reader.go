@@ -125,10 +125,8 @@ func (rr *rawReader) parse(data []byte) {
 				rr.logger.Info("ignore ChangeCipherSpec record")
 				continue
 			}
-			// if err := rr.changeCipherSpec(); err != nil {
-			// 	return err
-			// }
-			rr.logger.Info("you must impletes ChangeCipherSpec logic")
+			rr.logger.Info("ChangeCipherSpec")
+			err = rr.changeCipherSpec()
 		case recordTypeApplicationData:
 			// 打印用户传输的数据
 			rr.logger.Info(fmt.Sprintf("read internet deliver content: %s", string(rawData)))
@@ -403,6 +401,28 @@ func (rr *rawReader) setTrafficSecret(suite *cipherSuiteTLS13, secret []byte) {
 	for i := range rr.seq {
 		rr.seq[i] = 0
 	}
+}
+
+func (rr *rawReader) prepareCipherSpec(version uint16, cipher interface{}, mac macFunction) {
+	rr.version = version
+	rr.nextCipher = cipher
+	rr.nextMac = mac
+}
+
+// changeCipherSpec changes the encryption and MAC states
+// to the ones previously passed to prepareCipherSpec.
+func (rr *rawReader) changeCipherSpec() error {
+	if rr.nextCipher == nil || rr.version == tls.VersionTLS13 {
+		return alertInternalError
+	}
+	rr.cipher = rr.nextCipher
+	rr.mac = rr.nextMac
+	rr.nextCipher = nil
+	rr.nextMac = nil
+	for i := range rr.seq {
+		rr.seq[i] = 0
+	}
+	return nil
 }
 
 func roundUp(a, b int) int {

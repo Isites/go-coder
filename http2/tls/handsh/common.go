@@ -57,6 +57,15 @@ const (
 	recordTypeApplicationData  recordType = 23
 )
 
+// Signature algorithms (for internal signaling use). Starting at 225 to avoid overlap with
+// TLS 1.2 codepoints (RFC 5246, Appendix A.4.1), with which these have nothing to do.
+const (
+	signaturePKCS1v15 uint8 = iota + 225
+	signatureRSAPSS
+	signatureECDSA
+	signatureEd25519
+)
+
 // TLS 1.3 Key Share. See RFC 8446, Section 4.2.8.
 type keyShare struct {
 	group tls.CurveID
@@ -110,4 +119,13 @@ func crand(c *tls.Config) io.Reader {
 		return rand.Reader
 	}
 	return r
+}
+
+func isSupportedSignatureAlgorithm(sigAlg tls.SignatureScheme, supportedSignatureAlgorithms []tls.SignatureScheme) bool {
+	for _, s := range supportedSignatureAlgorithms {
+		if s == sigAlg {
+			return true
+		}
+	}
+	return false
 }

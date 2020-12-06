@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -36,5 +37,11 @@ func main() {
 	})
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	// http.ListenAndServe(":8080", nil)
-	http.ListenAndServeTLS(":8080", "ca.crt", "ca.key", nil)
+	// http.ListenAndServeTLS(":8080", "ca.crt", "ca.key", nil)
+	server := &http.Server{Addr: ":8080", Handler: nil}
+	server.TLSConfig = new(tls.Config)
+	server.TLSConfig.PreferServerCipherSuites = true
+	server.TLSConfig.NextProtos = append(server.TLSConfig.NextProtos, "h2", "http/1.1")
+	server.TLSConfig.MaxVersion = tls.VersionTLS12
+	server.ListenAndServeTLS("ca.crt", "ca.key")
 }

@@ -2,25 +2,43 @@ package handsh
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"hash"
 )
+
+type processor interface {
+	process(isClient bool, msg interface{}) error
+}
 
 // TLSMsgParser https 数据的解析
 type TLSMsgParser struct {
 	ClientConfig *tls.Config
 	// 保留client和server的hellomsg，这两个对拿到加密密钥至关重要
-	clientHello     *clientHelloMsg
-	serverHello     *serverHelloMsg
-	transcript      hash.Hash
-	selectedSuite   *cipherSuiteTLS13
-	clientReader    *rawReader
-	serverReader    *rawReader
-	handshakeSecret []byte
-	clientSecret    []byte
-	serverSecret    []byte
-	masterSecret    []byte
-	trafficSecret   []byte
+	clientHello  *clientHelloMsg
+	serverHello  *serverHelloMsg
+	clientReader *rawReader
+	serverReader *rawReader
+	vers         uint16
+	msgProcessor processor
+}
+
+// NewParser 。。
+func NewParser(conf *tls.Config) *TLSMsgParser {
+	pr := &TLSMsgParser{
+		ClientConfig: conf,
+		clientReader: &rawReader{
+			isClient: true,
+			logger:   client,
+		},
+		serverReader: &rawReader{
+			logger: server,
+		},
+	}
+	pr.clientReader.emit = pr.processMsg
+	pr.serverReader.emit = pr.processMsg
+	return pr
 }
 
 // Parse 交给指定reader读取数据
@@ -76,6 +94,7 @@ func (pr *TLSMsgParser) pickTLSVersion(serverHello *serverHelloMsg) error {
 				// 设置client和server的tlsversion
 				pr.clientReader.version = v
 				pr.serverReader.version = v
+				pr.vers = v
 				return nil
 			}
 		}
@@ -92,9 +111,6 @@ func (pr *TLSMsgParser) processMsg(isClient bool, msg interface{}, err error) {
 		logger.Err(err.Error())
 		return
 	}
-	if tlsMsg, ok := msg.(handshakeMessage); ok && pr.transcript != nil {
-		pr.transcript.Write(tlsMsg.marshal())
-	}
 	switch tlsMsg := msg.(type) {
 	case *clientHelloMsg:
 		pr.clientHello = tlsMsg
@@ -104,89 +120,145 @@ func (pr *TLSMsgParser) processMsg(isClient bool, msg interface{}, err error) {
 			logger.Err(err.Error())
 			return
 		}
-		if pr.clientReader.version < tls.VersionTLS13 || pr.serverReader.version < tls.VersionTLS13 {
-			break
-		}
 		pr.serverHello = tlsMsg
-		if err := pr.establishHandKeyFirstTime(pr.clientHello, pr.serverHello); err != nil {
-			logger.Err(err.Error())
-			return
-		}
-		pr.clientReader.setTrafficSecret(pr.selectedSuite, pr.serverSecret)
-		pr.serverReader.setTrafficSecret(pr.selectedSuite, pr.clientSecret)
-	case *finishedMsg:
-		if pr.clientReader.version < tls.VersionTLS13 || pr.serverReader.version < tls.VersionTLS13 {
-			break
-		}
-		if isClient {
-			// client read server finishedMsg 并且设置读取server数据的key
-			suite := pr.selectedSuite
-			pr.trafficSecret = suite.deriveSecret(pr.masterSecret,
-				clientApplicationTrafficLabel, pr.transcript)
-			serverSecret := suite.deriveSecret(pr.masterSecret,
-				serverApplicationTrafficLabel, pr.transcript)
-			pr.clientReader.setTrafficSecret(suite, serverSecret)
+		if pr.vers == tls.VersionTLS13 {
+			pr.msgProcessor = &tls13Processor{
+				tr: pr,
+			}
 		} else {
-			// server read client finishedMsg 设置server读取数据的key
-			suite := pr.selectedSuite
-			pr.serverReader.setTrafficSecret(suite, pr.trafficSecret)
+			pr.msgProcessor = &defalutProcessor{
+				tr: pr,
+			}
 		}
 	}
+	// 读完serverhellomsg 之后tls版本才不为0
+	if pr.vers == 0 {
+		return
+	}
+	// 处理hellomsg 之外的信息解析解密信息
+	pr.msgProcessor.process(isClient, msg)
 }
 
-// 因为获取密钥的过程需要使用clienthello和serverhello的摘要
-// 故选择client读取到serverhello开始计算密钥
-// 此逻辑参考tls握手客户端逻辑
-// 第一次建立tls握手的key
-func (pr *TLSMsgParser) establishHandKeyFirstTime(clientHello *clientHelloMsg, serverHello *serverHelloMsg) error {
-	//
-	suite := mutualCipherSuiteTLS13(clientHello.cipherSuites, serverHello.cipherSuite)
-	pr.selectedSuite = suite
-	// 计算clienthello和serverhello的摘要
-	pr.transcript = suite.hash.New()
-	pr.transcript.Write(clientHello.marshal())
-	pr.transcript.Write(serverHello.marshal())
-	curveID := curvePreferences(pr.ClientConfig)[0]
-	if _, ok := curveForCurveID(curveID); curveID != tls.X25519 && !ok {
-		return fmt.Errorf("tls: CurvePreferences includes unsupported curve")
+type tls13Processor struct {
+	tr              *TLSMsgParser
+	transcript      hash.Hash
+	selectedSuite   *cipherSuiteTLS13
+	handshakeSecret []byte
+	clientSecret    []byte
+	serverSecret    []byte
+	masterSecret    []byte
+	trafficSecret   []byte
+}
+
+type defalutProcessor struct {
+	tr               *TLSMsgParser
+	selectedSuite    *cipherSuite
+	peerCertificates []*x509.Certificate
+	masterSecret     []byte
+}
+
+func (p *defalutProcessor) process(isClient bool, msg interface{}) error {
+	tr := p.tr
+	switch m := msg.(type) {
+	case *serverHelloMsg:
+		// 选择suite
+		suite := mutualCipherSuite(tr.clientHello.cipherSuites, tr.serverHello.cipherSuite)
+		if suite == nil {
+			panic(errors.New("you have need to implements key exchange method"))
+		}
+		p.selectedSuite = suite
+	case *certificateMsg:
+		p.peerCertificates = make([]*x509.Certificate, len(m.certificates))
+		for i, asn1Data := range m.certificates {
+			cert, err := x509.ParseCertificate(asn1Data)
+			if err != nil {
+				return errors.New("tls: failed to parse certificate from server: " + err.Error())
+			}
+			p.peerCertificates[i] = cert
+		}
+	case *serverKeyExchangeMsg:
+		keyAgreement := p.selectedSuite.ka(tr.vers)
+		if err := keyAgreement.processServerKeyExchange(tr.ClientConfig, tr.clientHello, tr.serverHello, p.peerCertificates[0], m); err != nil {
+			return err
+		}
+		preMasterSecret, _, err := keyAgreement.generateClientKeyExchange(tr.ClientConfig, tr.clientHello, p.peerCertificates[0])
+		if err != nil {
+			return err
+		}
+		p.masterSecret = masterFromPreMasterSecret(tr.vers, p.selectedSuite, preMasterSecret, tr.clientHello.random, tr.serverHello.random)
+		suite := p.selectedSuite
+		clientMAC, serverMAC, clientKey, serverKey, clientIV, serverIV :=
+			keysFromMasterSecret(tr.vers, suite, p.masterSecret, tr.clientHello.random, tr.serverHello.random, suite.macLen, suite.keyLen, suite.ivLen)
+		var clientCipher, serverCipher interface{}
+		var clientHash, serverHash macFunction
+		if suite.cipher != nil {
+			clientCipher = suite.cipher(clientKey, clientIV, true /* for reading */)
+			clientHash = suite.mac(tr.vers, clientMAC)
+			serverCipher = suite.cipher(serverKey, serverIV, true /* for reading */)
+			serverHash = suite.mac(tr.vers, serverMAC)
+		} else {
+			clientCipher = suite.aead(clientKey, clientIV)
+			serverCipher = suite.aead(serverKey, serverIV)
+		}
+		tr.clientReader.prepareCipherSpec(tr.vers, serverCipher, serverHash)
+		tr.serverReader.prepareCipherSpec(tr.vers, clientCipher, clientHash)
+
 	}
-	params, err := generateECDHEParameters(crand(pr.ClientConfig), curveID)
-	if err != nil {
-		return err
-	}
-	sharedKey := params.SharedKey(serverHello.serverShare.data)
-	if sharedKey == nil {
-		return fmt.Errorf("tls: invalid server key share")
-	}
-	// debug handshake_client_tls13.go得到的结果
-	earlySecret := suite.extract(nil, nil)
-	handshakeSecret := suite.extract(sharedKey,
-		suite.deriveSecret(earlySecret, "derived", nil))
-	pr.handshakeSecret = handshakeSecret
-	clientSecret := suite.deriveSecret(handshakeSecret,
-		clientHandshakeTrafficLabel, pr.transcript)
-	pr.clientSecret = clientSecret
-	serverSecret := suite.deriveSecret(handshakeSecret,
-		serverHandshakeTrafficLabel, pr.transcript)
-	pr.serverSecret = serverSecret
-	masterSecret := suite.extract(nil, suite.deriveSecret(handshakeSecret, "derived", nil))
-	pr.masterSecret = masterSecret
 	return nil
 }
 
-// NewParser 。。
-func NewParser(conf *tls.Config) *TLSMsgParser {
-	pr := &TLSMsgParser{
-		ClientConfig: conf,
-		clientReader: &rawReader{
-			isClient: true,
-			logger:   client,
-		},
-		serverReader: &rawReader{
-			logger: server,
-		},
+func (p *tls13Processor) process(isClient bool, msg interface{}) error {
+	if tlsMsg, ok := msg.(handshakeMessage); ok && p.transcript != nil {
+		p.transcript.Write(tlsMsg.marshal())
 	}
-	pr.clientReader.emit = pr.processMsg
-	pr.serverReader.emit = pr.processMsg
-	return pr
+	tr := p.tr
+	switch msg.(type) {
+	case *serverHelloMsg:
+		suite := mutualCipherSuiteTLS13(tr.clientHello.cipherSuites, tr.serverHello.cipherSuite)
+		p.selectedSuite = suite
+		// 计算clienthello和serverhello的摘要
+		p.transcript = suite.hash.New()
+		p.transcript.Write(tr.clientHello.marshal())
+		p.transcript.Write(tr.serverHello.marshal())
+		curveID := curvePreferences(tr.ClientConfig)[0]
+		if _, ok := curveForCurveID(curveID); curveID != tls.X25519 && !ok {
+			return fmt.Errorf("tls: CurvePreferences includes unsupported curve")
+		}
+		params, err := generateECDHEParameters(crand(tr.ClientConfig), curveID)
+		if err != nil {
+			return err
+		}
+		sharedKey := params.SharedKey(tr.serverHello.serverShare.data)
+		if sharedKey == nil {
+			return fmt.Errorf("tls: invalid server key share")
+		}
+		// debug handshake_client_tls13.go得到的结果
+		earlySecret := suite.extract(nil, nil)
+		p.handshakeSecret = suite.extract(sharedKey,
+			suite.deriveSecret(earlySecret, "derived", nil))
+		p.clientSecret = suite.deriveSecret(p.handshakeSecret,
+			clientHandshakeTrafficLabel, p.transcript)
+		p.serverSecret = suite.deriveSecret(p.handshakeSecret,
+			serverHandshakeTrafficLabel, p.transcript)
+		masterSecret := suite.extract(nil, suite.deriveSecret(p.handshakeSecret, "derived", nil))
+		p.masterSecret = masterSecret
+
+		tr.clientReader.setTrafficSecret(p.selectedSuite, p.serverSecret)
+		tr.serverReader.setTrafficSecret(p.selectedSuite, p.clientSecret)
+	case *finishedMsg:
+		if isClient {
+			// client read server finishedMsg 并且设置读取server数据的key
+			suite := p.selectedSuite
+			p.trafficSecret = suite.deriveSecret(p.masterSecret,
+				clientApplicationTrafficLabel, p.transcript)
+			serverSecret := suite.deriveSecret(p.masterSecret,
+				serverApplicationTrafficLabel, p.transcript)
+			tr.clientReader.setTrafficSecret(suite, serverSecret)
+		} else {
+			// server read client finishedMsg 设置server读取数据的key
+			suite := p.selectedSuite
+			tr.serverReader.setTrafficSecret(suite, p.trafficSecret)
+		}
+	}
+	return nil
 }

@@ -86,7 +86,7 @@ func main() {
 		Praser:   praser,
 	}
 	// 可以限制tls1.2，tls1.3和tls1.2流程不一样
-	// sconf.MaxVersion = tls.VersionTLS12
+	sconf.MaxVersion = tls.VersionTLS12
 	server := tls.Server(sc, sconf)
 	client := tls.Client(cs, cconf)
 	wg.Add(2)
