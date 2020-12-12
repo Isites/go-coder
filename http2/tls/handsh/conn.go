@@ -7,6 +7,21 @@ import (
 	"time"
 )
 
+// 这里需要注意的是， ”读完一个消息才能写入另外一个消息“这个设计有缺陷
+// var m int
+// if len(b) > 1 && c.vers == VersionTLS10 {
+// 	if _, ok := c.out.cipher.(cipher.BlockMode); ok {
+// 		n, err := c.writeRecordLocked(recordTypeApplicationData, b[:1])
+// 		if err != nil {
+// 			return n, c.out.setErrorLocked(err)
+// 		}
+// 		m, b = 1, b[1:]
+// 	}
+// }
+
+// n, err := c.writeRecordLocked(recordTypeApplicationData, b)
+// 底层针对tls1.0有这样一个逻辑，对于大于一字节的用户数据，会写为两个recordTypeApplicationData消息
+
 // TCPCon 简单模拟实现底层连接
 type TCPCon struct {
 	Local    TCPAddr

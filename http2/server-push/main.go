@@ -42,6 +42,7 @@ func main() {
 	server.TLSConfig = new(tls.Config)
 	server.TLSConfig.PreferServerCipherSuites = true
 	server.TLSConfig.NextProtos = append(server.TLSConfig.NextProtos, "h2", "http/1.1")
+	// 如果支持的tls版本小于VersionTLS12，则h2不能放在server.TLSConfig.NextProtos里
 	server.TLSConfig.MaxVersion = tls.VersionTLS12
 	server.ListenAndServeTLS("ca.crt", "ca.key")
 }
