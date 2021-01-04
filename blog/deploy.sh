@@ -9,10 +9,10 @@ printf "\033[0;32mDeploying updates to GitHub...\033[0m\n"
 `go env GOPATH`/bin/hugo # if using a theme, replace with `hugo -t <YOURTHEME>`
 
 # Go To Public folder
-cd public
+#cd public
 
 # Add changes to git.
-git add .
+git add public
 
 # Commit changes.
 msg="rebuilding site $(date)"
