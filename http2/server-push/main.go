@@ -25,11 +25,11 @@ func main() {
 		}
 		fmt.Fprintf(w, `<html>
 		<head>
-			<title>新世界杂货铺</title>
+			<title>"Gopher指北</title>
 			<link rel="stylesheet" href="/static/style.css"">
 		</head>
 		<body>
-			<div>Hello 新世界杂货铺</div>
+			<div>Hello "Gopher指北</div>
 			<div id="content"></div>
 			<script src="/static/app.js"></script>
 		</body>

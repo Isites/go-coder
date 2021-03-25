@@ -1,2 +1,2 @@
 
-document.getElementById("content").innerHTML = '"新世界杂货铺" from js'
+document.getElementById("content").innerHTML = '"Gopher指北" from js'
