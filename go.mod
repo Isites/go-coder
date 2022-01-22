@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.1
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/panjf2000/gnet v1.3.2
 	github.com/refraction-networking/utls v0.0.0-20201210053706-2179f286686b
 	github.com/shopspring/decimal v1.3.1
