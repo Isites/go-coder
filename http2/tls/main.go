@@ -111,7 +111,7 @@ func main() {
 		wg.Done()
 	}()
 	wg.Wait()
-	client.Write([]byte("点赞关注：新世界杂货铺"))
+	client.Write([]byte("点赞关注：Gopher指北"))
 	close(ch)
 	praser.LastCheck()
 }
