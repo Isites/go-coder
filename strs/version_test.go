@@ -11,6 +11,16 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 )
 
+// 判断是否全为0
+func zeroRune(s []rune) bool {
+	for _, r := range s {
+		if r != '0' && r != '.' {
+			return false
+		}
+	}
+	return true
+}
+
 func CompareVersionNoSplit(ver1, ver2 string) (ret int) {
 	defer func() {
 		if ret > 0 {
@@ -51,8 +61,14 @@ func CompareVersionNoSplit(ver1, ver2 string) (ret int) {
 		}
 	}
 	if i < l1 {
+		if zeroRune(rv1[i:]) {
+			return 0
+		}
 		ret = 1
 	} else if j < l2 {
+		if zeroRune(rv2[j:]) {
+			return 0
+		}
 		ret = -1
 	}
 	return ret
@@ -83,8 +99,11 @@ func CompareVersion(ver1, ver2 string) int {
 	// slow path
 	vers1 := strings.Split(ver1, ".")
 	vers2 := strings.Split(ver2, ".")
-	v1l, v2l := len(vers1), len(vers2)
-	for i := 0; i < v1l && i < v2l; i++ {
+	var (
+		v1l, v2l = len(vers1), len(vers2)
+		i        = 0
+	)
+	for ; i < v1l && i < v2l; i++ {
 		a, e1 := strconv.Atoi(vers1[i])
 		b, e2 := strconv.Atoi(vers2[i])
 		res := 0
@@ -101,11 +120,19 @@ func CompareVersion(ver1, ver2 string) int {
 			return -1
 		}
 	}
-	// 最后谁仍有剩余，则谁大
-	if v1l > v2l {
-		return 1
-	} else if v1l < v2l {
-		return -1
+	// 最后谁仍有剩余且不为0，则谁大
+	if i < v1l {
+		for ; i < v1l; i++ {
+			if !zeroRune([]rune(vers1[i])) {
+				return 1
+			}
+		}
+	} else if i < v2l {
+		for ; i < v2l; i++ {
+			if !zeroRune([]rune(vers2[i])) {
+				return -1
+			}
+		}
 	}
 	return 0
 }
@@ -168,8 +195,11 @@ func CompareVersionWithCache1(ver1, ver2 string) int {
 		Set(ver2, cmv2, time.Now().Unix()+expire)
 	}
 	// compare ver str
-	v1l, v2l := len(cmv1), len(cmv2)
-	for i := 0; i < len(cmv1) && i < len(cmv2); i++ {
+	var (
+		v1l, v2l = len(cmv1), len(cmv2)
+		i        = 0
+	)
+	for ; i < len(cmv1) && i < len(cmv2); i++ {
 		res := 0
 		// can use int compare
 		if cmv1[i].canInt && cmv2[i].canInt {
@@ -183,10 +213,27 @@ func CompareVersionWithCache1(ver1, ver2 string) int {
 			return -1
 		}
 	}
-	if v1l > v2l {
-		return 1
-	} else if v1l < v2l {
-		return -1
+	// 比较剩余部分，且剩余部分不为0
+	if i < v1l {
+		for ; i < v1l; i++ {
+			if cmv1[i].canInt && cmv1[i].iv != 0 {
+				return 1
+			}
+			if !zeroRune([]rune(cmv1[i].sv)) {
+				return 1
+			}
+		}
+	} else if i < v2l {
+		for ; i < v2l; i++ {
+			for ; i < v1l; i++ {
+				if cmv2[i].canInt && cmv2[i].iv != 0 {
+					return -1
+				}
+				if !zeroRune([]rune(cmv2[i].sv)) {
+					return -1
+				}
+			}
+		}
 	}
 	return 0
 }
